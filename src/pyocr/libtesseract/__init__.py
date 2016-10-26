@@ -21,7 +21,9 @@ from . import tesseract_raw
 
 __all__ = [
     'can_detect_orientation',
+    'can_detect_skew',
     'detect_orientation',
+    'detect_skew',
     'get_available_builders',
     'get_available_languages',
     'get_name',
@@ -33,6 +35,10 @@ __all__ = [
 
 
 def can_detect_orientation():
+    return True
+
+
+def can_detect_skew():
     return True
 
 
@@ -57,6 +63,21 @@ def detect_orientation(image, lang=None):
         return {
             'angle': orientation,
             'confidence': os['confidence']
+        }
+    finally:
+        tesseract_raw.cleanup(handle)
+
+
+def detect_skew(image, lang=None):
+    handle = tesseract_raw.init(lang=lang)
+    try:
+        tesseract_raw.set_page_seg_mode(
+            handle, tesseract_raw.PageSegMode.AUTO_OSD
+        )
+        tesseract_raw.set_image(handle, image)
+        os = tesseract_raw.detect_skew(handle)
+        return {
+            'skew': os['skew']
         }
     finally:
         tesseract_raw.cleanup(handle)

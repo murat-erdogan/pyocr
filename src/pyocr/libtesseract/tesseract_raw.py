@@ -528,3 +528,22 @@ def detect_os(handle):
         "orientation": results.best_orientation_id,
         "confidence": results.best_oconfidence,
     }
+
+
+def detect_skew(handle):
+    global g_libtesseract
+    assert (g_libtesseract)
+
+    orientation = ctypes.c_int()
+    direction = ctypes.c_int()
+    line_order = ctypes.c_int()
+    skew = ctypes.c_float()
+
+    iterator = g_libtesseract.TessBaseAPIAnalyseLayout(ctypes.c_void_p(handle))
+
+    g_libtesseract.TessPageIteratorOrientation(iterator, ctypes.pointer(orientation), ctypes.pointer(direction),
+                                               ctypes.pointer(line_order), ctypes.pointer(skew))
+
+    return {
+        "skew": skew.value
+    }
