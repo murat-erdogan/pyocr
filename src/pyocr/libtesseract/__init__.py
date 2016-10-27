@@ -24,6 +24,7 @@ __all__ = [
     'can_detect_skew',
     'detect_orientation',
     'detect_skew',
+    'layout_analysis',
     'get_available_builders',
     'get_available_languages',
     'get_name',
@@ -164,6 +165,47 @@ def image_to_string(image, lang=None, builder=None):
         tesseract_raw.cleanup(handle)
 
     return builder.get_output()
+
+
+def layout_analysis(image, lang=None):
+    handle = tesseract_raw.init(lang=lang)
+
+    lvl_block = tesseract_raw.PageIteratorLevel.BLOCK
+
+    try:
+        tesseract_raw.set_page_seg_mode(
+            handle, tesseract_raw.PageSegMode.AUTO_OSD
+        )
+
+        tesseract_raw.set_image(handle, image)
+
+        tesseract_raw.recognize(handle)
+        res_iterator = tesseract_raw.get_iterator(handle)
+        if res_iterator is None:
+            raise tesseract_raw.TesseractError(
+                "no script", "no script detected"
+            )
+        page_iterator = tesseract_raw.result_iterator_get_page_iterator(
+            res_iterator
+        )
+
+        boxes = []
+
+        while True:
+            if tesseract_raw.page_iterator_is_at_beginning_of(page_iterator, lvl_block):
+                (r, box) = tesseract_raw.page_iterator_bounding_box(
+                    page_iterator, lvl_block
+                )
+                assert(r)
+                boxes.append(box)
+
+            if not tesseract_raw.page_iterator_next(page_iterator, lvl_block):
+                break
+
+    finally:
+        tesseract_raw.cleanup(handle)
+
+    return boxes
 
 
 def is_available():
